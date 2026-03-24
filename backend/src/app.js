@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
+const authRouter = require('./routes/auth');
+const authenticateToken = require('./middleware/authenticateToken');
 
 const app = express();
 
@@ -13,5 +15,10 @@ app.use(morgan('combined'));
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
+
+app.use('/api/auth', authRouter);
+
+// All routes added after this middleware require a valid JWT
+app.use(authenticateToken);
 
 module.exports = app;
