@@ -1,6 +1,7 @@
 const express = require('express');
 const { Types } = require('mongoose');
 const Endpoint = require('../models/Endpoint');
+const { registerOrUpdateEndpoint, unregisterEndpoint } = require('../scheduler/pingScheduler');
 
 const router = express.Router();
 
@@ -56,6 +57,7 @@ router.post('/', async (req, res) => {
       thresholdMs: Number(thresholdMs),
       isActive: Boolean(isActive),
     });
+    registerOrUpdateEndpoint(created);
     return res.status(201).json(created);
   } catch (error) {
     console.error('[endpoints] create failed', error);
@@ -111,6 +113,7 @@ router.put('/:id', async (req, res) => {
 
     Object.assign(existing, updates);
     await existing.save();
+    registerOrUpdateEndpoint(existing);
     return res.json(existing);
   } catch (error) {
     console.error('[endpoints] update failed', error);
@@ -129,6 +132,7 @@ router.delete('/:id', async (req, res) => {
     if (!deleted) {
       return res.status(404).json({ message: 'Endpoint not found' });
     }
+    unregisterEndpoint(id);
     return res.status(204).send();
   } catch (error) {
     console.error('[endpoints] delete failed', error);
