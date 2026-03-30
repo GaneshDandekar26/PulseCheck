@@ -6,6 +6,7 @@ const authRouter = require('./routes/auth');
 const authenticateToken = require('./middleware/authenticateToken');
 const endpointsRouter = require('./routes/endpoints');
 const dashboardRouter = require('./routes/dashboard');
+const alertsRouter = require('./routes/alerts');
 
 const app = express();
 
@@ -25,5 +26,6 @@ app.use(authenticateToken);
 
 app.use('/api/endpoints', endpointsRouter);
 app.use('/api/dashboard', dashboardRouter);
+app.use('/api/alerts', alertsRouter);
 
 module.exports = app;

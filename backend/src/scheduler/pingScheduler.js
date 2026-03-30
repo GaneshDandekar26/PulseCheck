@@ -2,6 +2,7 @@ const cron = require('node-cron');
 const axios = require('axios');
 const Endpoint = require('../models/Endpoint');
 const PingLog = require('../models/PingLog');
+const { checkAlerts } = require('../alerts/alertService');
 
 const jobs = new Map();
 
@@ -9,7 +10,7 @@ const cronExprFromMinutes = (minutes) => `*/${Math.max(1, minutes)} * * * *`;
 
 const recordPing = async ({ endpoint, statusCode, latencyMs, isUp, errorMessage }) => {
   try {
-    await PingLog.create({
+    const log = await PingLog.create({
       endpointId: endpoint._id,
       statusCode,
       latencyMs,
@@ -17,6 +18,7 @@ const recordPing = async ({ endpoint, statusCode, latencyMs, isUp, errorMessage 
       errorMessage: errorMessage || null,
       timestamp: new Date(),
     });
+    await checkAlerts(log);
   } catch (error) {
     console.error('[scheduler] Failed to record ping', error);
   }
