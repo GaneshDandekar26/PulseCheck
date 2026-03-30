@@ -33,4 +33,6 @@ const pingLogSchema = new Schema(
   }
 );
 
+pingLogSchema.index({ endpointId: 1, timestamp: -1 });
+
 module.exports = model('PingLog', pingLogSchema);

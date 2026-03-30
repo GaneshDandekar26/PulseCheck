@@ -1,6 +1,7 @@
 const express = require('express');
 const { Types } = require('mongoose');
 const Endpoint = require('../models/Endpoint');
+const PingLog = require('../models/PingLog');
 const { registerOrUpdateEndpoint, unregisterEndpoint } = require('../scheduler/pingScheduler');
 
 const router = express.Router();
@@ -24,6 +25,109 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('[endpoints] list failed', error);
     return res.status(500).json({ message: 'Failed to fetch endpoints' });
+  }
+});
+
+router.get('/:id/stats', async (req, res) => {
+  const { id } = req.params;
+  const { window = '1h' } = req.query;
+  const windows = {
+    '1h': 60 * 60 * 1000,
+    '24h': 24 * 60 * 60 * 1000,
+    '7d': 7 * 24 * 60 * 60 * 1000,
+  };
+
+  if (!Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid endpoint id' });
+  }
+  if (!windows[window]) {
+    return res.status(400).json({ message: 'window must be one of 1h, 24h, or 7d' });
+  }
+
+  try {
+    const endpoint = await Endpoint.findOne({ _id: id, owner: req.user.id });
+    if (!endpoint) {
+      return res.status(404).json({ message: 'Endpoint not found' });
+    }
+
+    const windowStart = new Date(Date.now() - windows[window]);
+    const stats = await PingLog.aggregate([
+      { $match: { endpointId: new Types.ObjectId(id), timestamp: { $gte: windowStart } } },
+      {
+        $group: {
+          _id: null,
+          total: { $sum: 1 },
+          avgLatencyMs: { $avg: '$latencyMs' },
+          upCount: { $sum: { $cond: ['$isUp', 1, 0] } },
+          errorCount: { $sum: { $cond: ['$isUp', 0, 1] } },
+        },
+      },
+      {
+        $project: {
+          _id: 0,
+          total: 1,
+          avgLatencyMs: { $ifNull: ['$avgLatencyMs', 0] },
+          uptimePct: {
+            $cond: [
+              { $gt: ['$total', 0] },
+              { $multiply: [{ $divide: ['$upCount', '$total'] }, 100] },
+              0,
+            ],
+          },
+          errorRate: {
+            $cond: [
+              { $gt: ['$total', 0] },
+              { $multiply: [{ $divide: ['$errorCount', '$total'] }, 100] },
+              0,
+            ],
+          },
+        },
+      },
+    ]);
+
+    const result = stats[0] || { total: 0, avgLatencyMs: 0, uptimePct: 0, errorRate: 0 };
+    return res.json({ window, ...result });
+  } catch (error) {
+    console.error('[endpoints] stats failed', error);
+    return res.status(500).json({ message: 'Failed to compute stats' });
+  }
+});
+
+router.get('/:id/logs', async (req, res) => {
+  const { id } = req.params;
+  const limit = Number(req.query.limit) || 50;
+  const page = Number(req.query.page) || 1;
+
+  if (!Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ message: 'Invalid endpoint id' });
+  }
+  if (!Number.isInteger(limit) || limit <= 0 || limit > 200) {
+    return res.status(400).json({ message: 'limit must be an integer between 1 and 200' });
+  }
+  if (!Number.isInteger(page) || page <= 0) {
+    return res.status(400).json({ message: 'page must be a positive integer' });
+  }
+
+  try {
+    const endpoint = await Endpoint.findOne({ _id: id, owner: req.user.id });
+    if (!endpoint) {
+      return res.status(404).json({ message: 'Endpoint not found' });
+    }
+
+    const [logs, total] = await Promise.all([
+      PingLog.find({ endpointId: id })
+        .sort({ timestamp: -1 })
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .lean(),
+      PingLog.countDocuments({ endpointId: id }),
+    ]);
+
+    const totalPages = total === 0 ? 0 : Math.ceil(total / limit);
+    return res.json({ page, limit, total, totalPages, results: logs });
+  } catch (error) {
+    console.error('[endpoints] logs failed', error);
+    return res.status(500).json({ message: 'Failed to fetch logs' });
   }
 });
 

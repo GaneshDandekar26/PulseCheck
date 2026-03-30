@@ -5,6 +5,7 @@ const morgan = require('morgan');
 const authRouter = require('./routes/auth');
 const authenticateToken = require('./middleware/authenticateToken');
 const endpointsRouter = require('./routes/endpoints');
+const dashboardRouter = require('./routes/dashboard');
 
 const app = express();
 
@@ -23,5 +24,6 @@ app.use('/api/auth', authRouter);
 app.use(authenticateToken);
 
 app.use('/api/endpoints', endpointsRouter);
+app.use('/api/dashboard', dashboardRouter);
 
 module.exports = app;
