@@ -6,7 +6,12 @@ const { checkAlerts } = require('../alerts/alertService');
 
 const jobs = new Map();
 
-const cronExprFromMinutes = (minutes) => `*/${Math.max(1, minutes)} * * * *`;
+const cronExprFromMinutes = (minutes) => {
+  const m = Math.max(1, minutes);
+  if (m < 60) return `*/${m} * * * *`;
+  const hours = Math.floor(m / 60);
+  return `0 */${hours} * * *`;
+};
 
 const recordPing = async ({ endpoint, statusCode, latencyMs, isUp, errorMessage }) => {
   try {
