@@ -1,7 +1,5 @@
 import { useQuery } from 'react-query';
 import api from '../api/http';
-import { useAuth } from '../context/AuthContext';
-import { useNavigate } from 'react-router-dom';
 
 const fetchSummary = async () => {
   const { data } = await api.get('/dashboard/summary');
@@ -9,31 +7,51 @@ const fetchSummary = async () => {
 };
 
 const DashboardPage = () => {
-  const { data, isLoading, error } = useQuery(['dashboard-summary'], fetchSummary);
-  const { logout } = useAuth();
-  const navigate = useNavigate();
+  const { data, isLoading, error } = useQuery(['dashboard-summary'], fetchSummary, {
+    refetchInterval: 30000,
+  });
 
-  const handleLogout = () => {
-    logout();
-    navigate('/login');
-  };
-
-  if (isLoading) return <div className="page">Loading...</div>;
-  if (error) return <div className="page">Failed to load dashboard</div>;
+  if (isLoading) return <div className="page loading-text">Loading dashboard metrics...</div>;
+  if (error) return <div className="page error-text">Failed to fetch dashboard summary.</div>;
 
   return (
-    <div className="page">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-        <h1 style={{ margin: 0 }}>Dashboard</h1>
-        <button className="auth-btn" style={{ width: 'auto', padding: '0.6rem 1.2rem', marginTop: 0 }} onClick={handleLogout}>Logout</button>
+    <div className="page fade-in">
+      <div className="page-header">
+        <h1>Overview</h1>
+        <p className="page-subtitle">Real-time pulse of your entire system.</p>
       </div>
-      <div className="card">
-        <p>Total endpoints: {data.totalEndpoints}</p>
-        <p>Active endpoints: {data.activeEndpoints}</p>
-        <p>Total logs: {data.totalLogs}</p>
-        <p>Avg latency: {Math.round(data.avgLatencyMs)} ms</p>
-        <p>Uptime: {data.uptimePct?.toFixed(2)}%</p>
-        <p>Error rate: {data.errorRate?.toFixed(2)}%</p>
+
+      <div className="dashboard-grid">
+        <div className="stat-card">
+          <h3>Total Monitors</h3>
+          <p className="stat-value">{data.totalEndpoints}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Active Monitors</h3>
+          <p className="stat-value">{data.activeEndpoints}</p>
+        </div>
+        <div className="stat-card">
+          <h3>Global Uptime</h3>
+          <p className="stat-value success-color">
+            {data.uptimePct?.toFixed(2)}<span className="unit">%</span>
+          </p>
+        </div>
+        <div className="stat-card">
+          <h3>Failure Rate</h3>
+          <p className="stat-value error-color">
+            {data.errorRate?.toFixed(2)}<span className="unit">%</span>
+          </p>
+        </div>
+        <div className="stat-card">
+          <h3>Average Latency</h3>
+          <p className="stat-value">
+            {Math.round(data.avgLatencyMs)}<span className="unit">ms</span>
+          </p>
+        </div>
+        <div className="stat-card">
+          <h3>Total Heartbeats</h3>
+          <p className="stat-value">{data.totalLogs}</p>
+        </div>
       </div>
     </div>
   );
