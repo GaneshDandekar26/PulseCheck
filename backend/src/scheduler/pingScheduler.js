@@ -83,6 +83,9 @@ const removeEndpointJob = (endpointId) => {
 
 const registerOrUpdateEndpoint = (endpoint) => {
   scheduleEndpoint(endpoint);
+  if (endpoint.isActive) {
+    runPing(endpoint);
+  }
 };
 
 const unregisterEndpoint = (endpointId) => {
