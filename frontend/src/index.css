@@ -463,3 +463,117 @@ body {
   from { opacity: 0; transform: translateY(15px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* =========================================
+   Endpoint Details Page
+========================================= */
+.detail-header-wrapper {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+}
+
+.detail-header-info h1 {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.time-window-select {
+  padding: 0.5rem 1rem;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  color: #fff;
+  border-radius: 8px;
+  outline: none;
+  font-family: inherit;
+}
+.time-window-select:focus {
+  border-color: var(--primary);
+}
+
+.charts-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 2rem;
+  margin-bottom: 3rem;
+}
+
+.chart-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1.5rem;
+  border-radius: 16px;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+.chart-card h3 {
+  margin-top: 0;
+  color: var(--text-muted);
+  font-weight: 600;
+  margin-bottom: 1.5rem;
+}
+
+.uptime-bar-container {
+  display: flex;
+  gap: 4px;
+  height: 48px;
+  width: 100%;
+}
+
+.uptime-segment {
+  flex: 1;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.05);
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+
+.uptime-segment:hover {
+  opacity: 0.8;
+}
+
+.uptime-segment.up {
+  background: var(--success);
+}
+
+.uptime-segment.down {
+  background: var(--error);
+}
+
+.alerts-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.alerts-table th, .alerts-table td {
+  padding: 1rem;
+  border-bottom: 1px solid var(--border);
+  text-align: left;
+}
+
+.alerts-table th {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  background: rgba(15, 23, 42, 0.3);
+}
+
+.alert-type-badge {
+  padding: 0.25rem 0.5rem;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.alert-type-latency {
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+}
+
+.alert-type-downtime {
+  background: rgba(239, 68, 68, 0.15);
+  color: #fca5a5;
+}

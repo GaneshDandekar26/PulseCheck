@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../api/http';
 import EndpointModal from '../components/EndpointModal';
@@ -123,6 +124,7 @@ const EndpointsPage = () => {
                 <td><span className="method-badge">{endpoint.method}</span></td>
                 <td><span className="interval-txt">{endpoint.intervalMinutes}m</span></td>
                 <td className="actions-cell">
+                  <Link to={`/endpoints/${endpoint._id}`} className="btn-text" style={{ textDecoration: 'none' }}>View</Link>
                   <button className="btn-text" onClick={() => handleToggleActive(endpoint)}>
                     {endpoint.isActive ? 'Pause' : 'Resume'}
                   </button>
