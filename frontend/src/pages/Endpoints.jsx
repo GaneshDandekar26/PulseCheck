@@ -84,58 +84,74 @@ const EndpointsPage = () => {
     updateMutation.mutate({ id: endpoint._id, updated: { isActive: !endpoint.isActive } });
   };
 
-  if (isLoading) return <div className="page loading-text">Loading monitors...</div>;
+  if (isLoading) return <div className="page loading-text">Loading monitors…</div>;
   if (error) return <div className="page error-text">Failed to fetch monitors.</div>;
 
   return (
     <div className="page fade-in">
-      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="page-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
         <div>
           <h1>Monitors</h1>
-          <p className="page-subtitle">Manage your API health checks.</p>
+          <p className="page-subtitle">
+            {endpoints.length} endpoint{endpoints.length !== 1 ? 's' : ''} configured
+          </p>
         </div>
-        <button className="btn-primary" onClick={() => handleOpenModal()}>+ Add Monitor</button>
+        <button className="btn-primary" onClick={() => handleOpenModal()}>
+          + Add Monitor
+        </button>
       </div>
 
-      <div className="table-container">
-        <table className="endpoints-table">
-          <thead>
-            <tr>
-              <th>Status</th>
-              <th>Name</th>
-              <th>Target URL</th>
-              <th>Method</th>
-              <th>Interval</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {endpoints.length === 0 ? (
-              <tr><td colSpan="6" className="text-center text-muted" style={{padding: '3rem'}}>No monitors found. Create one!</td></tr>
-            ) : endpoints.map(endpoint => (
-              <tr key={endpoint._id}>
-                <td>
-                  <span className={`status-badge ${endpoint.isActive ? 'badge-active' : 'badge-paused'}`}>
-                    {endpoint.isActive ? 'Active' : 'Paused'}
-                  </span>
-                </td>
-                <td className="font-semibold">{endpoint.name}</td>
-                <td className="text-muted url-cell">{endpoint.url}</td>
-                <td><span className="method-badge">{endpoint.method}</span></td>
-                <td><span className="interval-txt">{endpoint.intervalMinutes}m</span></td>
-                <td className="actions-cell">
-                  <Link to={`/endpoints/${endpoint._id}`} className="btn-text" style={{ textDecoration: 'none' }}>View</Link>
-                  <button className="btn-text" onClick={() => handleToggleActive(endpoint)}>
-                    {endpoint.isActive ? 'Pause' : 'Resume'}
-                  </button>
-                  <button className="btn-text" onClick={() => handleOpenModal(endpoint)}>Edit</button>
-                  <button className="btn-text text-danger" onClick={() => setDeleteConfirmId(endpoint._id)}>Delete</button>
-                </td>
+      {endpoints.length === 0 ? (
+        <div className="table-container" style={{ padding: '4rem 2rem', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '1rem', opacity: 0.5 }}>📡</div>
+          <p style={{ color: 'var(--text-secondary)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>
+            No monitors configured yet
+          </p>
+          <p style={{ color: 'var(--text-tertiary)', fontSize: '0.9rem' }}>
+            Click "Add Monitor" to start tracking your first API endpoint
+          </p>
+        </div>
+      ) : (
+        <div className="table-container">
+          <table className="endpoints-table">
+            <thead>
+              <tr>
+                <th>Status</th>
+                <th>Name</th>
+                <th>Target URL</th>
+                <th>Method</th>
+                <th>Interval</th>
+                <th>Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {endpoints.map(endpoint => (
+                <tr key={endpoint._id}>
+                  <td>
+                    <span className={`status-badge ${endpoint.isActive ? 'badge-active' : 'badge-paused'}`}>
+                      {endpoint.isActive ? 'Active' : 'Paused'}
+                    </span>
+                  </td>
+                  <td className="font-semibold">{endpoint.name}</td>
+                  <td className="url-cell">{endpoint.url}</td>
+                  <td><span className="method-badge">{endpoint.method}</span></td>
+                  <td><span className="interval-txt">{endpoint.intervalMinutes}m</span></td>
+                  <td className="actions-cell">
+                    <Link to={`/endpoints/${endpoint._id}`} className="btn-text" style={{ textDecoration: 'none' }}>
+                      Details
+                    </Link>
+                    <button className="btn-text" onClick={() => handleToggleActive(endpoint)}>
+                      {endpoint.isActive ? 'Pause' : 'Resume'}
+                    </button>
+                    <button className="btn-text" onClick={() => handleOpenModal(endpoint)}>Edit</button>
+                    <button className="btn-text text-danger" onClick={() => setDeleteConfirmId(endpoint._id)}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       <EndpointModal 
         isOpen={isModalOpen} 
@@ -152,7 +168,7 @@ const EndpointsPage = () => {
           setDeleteConfirmId(null);
         }}
         title="Delete Monitor"
-        message="Are you sure you want to permanently delete this monitor and all its history?"
+        message="Are you sure you want to permanently delete this monitor and all its history? This action cannot be undone."
       />
     </div>
   );

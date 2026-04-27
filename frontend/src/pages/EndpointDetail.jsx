@@ -10,7 +10,30 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
+  AreaChart,
+  Area,
 } from 'recharts';
+
+const CustomTooltip = ({ active, payload, label }) => {
+  if (active && payload && payload.length) {
+    return (
+      <div style={{
+        background: 'rgba(15, 23, 42, 0.95)',
+        backdropFilter: 'blur(12px)',
+        border: '1px solid rgba(255,255,255,0.08)',
+        borderRadius: '10px',
+        padding: '0.75rem 1rem',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+      }}>
+        <p style={{ color: '#8892b0', fontSize: '0.8rem', margin: '0 0 0.3rem' }}>{label}</p>
+        <p style={{ color: '#818cf8', fontSize: '1rem', fontWeight: 700, margin: 0 }}>
+          {payload[0].value} ms
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
 
 const EndpointDetail = () => {
   const { id } = useParams();
@@ -51,7 +74,7 @@ const EndpointDetail = () => {
   );
 
   if (isStatsLoading || isLogsLoading || isAlertsLoading) {
-    return <div className="page loading-text">Loading endpoint details...</div>;
+    return <div className="page loading-text">Loading endpoint details…</div>;
   }
 
   // Ensure logs are sorted oldest to newest for the chart (left to right)
@@ -66,8 +89,8 @@ const EndpointDetail = () => {
 
   return (
     <div className="page fade-in">
-      <Link to="/dashboard" className="btn-text" style={{ display: 'inline-block', marginBottom: '1.5rem' }}>
-        &larr; Back to Dashboard
+      <Link to="/endpoints" className="btn-text" style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', marginBottom: '1.5rem' }}>
+        ← Back to Monitors
       </Link>
       
       <div className="detail-header-wrapper">
@@ -75,13 +98,13 @@ const EndpointDetail = () => {
           <h1>
             {endpoint?.name || 'Unknown Endpoint'}
             {endpoint?.isActive ? (
-              <span className="status-badge badge-active" style={{ fontSize: '0.9rem' }}>Active</span>
+              <span className="status-badge badge-active" style={{ fontSize: '0.75rem' }}>Active</span>
             ) : (
-              <span className="status-badge badge-paused" style={{ fontSize: '0.9rem' }}>Paused</span>
+              <span className="status-badge badge-paused" style={{ fontSize: '0.75rem' }}>Paused</span>
             )}
           </h1>
-          <p className="page-subtitle" style={{ marginTop: '0.5rem' }}>
-            <span className="method-badge" style={{ marginRight: '0.75rem' }}>{endpoint?.method || 'GET'}</span>
+          <p className="page-subtitle" style={{ marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+            <span className="method-badge">{endpoint?.method || 'GET'}</span>
             <span className="url-cell" style={{ display: 'inline-block', verticalAlign: 'middle' }}>
               {endpoint?.url || '...'}
             </span>
@@ -101,9 +124,10 @@ const EndpointDetail = () => {
         </div>
       </div>
 
+      {/* Stats Grid */}
       <div className="dashboard-grid" style={{ marginBottom: '2rem' }}>
         <div className="stat-card">
-          <h3>Total Pings ({timeWindow})</h3>
+          <h3>Total Pings</h3>
           <p className="stat-value">{stats?.total || 0}</p>
         </div>
         <div className="stat-card">
@@ -112,48 +136,64 @@ const EndpointDetail = () => {
         </div>
         <div className="stat-card">
           <h3>Uptime</h3>
-          <p className="stat-value">{Number(stats?.uptimePct || 0).toFixed(2)}%</p>
+          <p className="stat-value success-color">{Number(stats?.uptimePct || 0).toFixed(2)}<span className="unit">%</span></p>
         </div>
         <div className="stat-card">
           <h3>Error Rate</h3>
-          <p className="stat-value">{Number(stats?.errorRate || 0).toFixed(2)}%</p>
+          <p className="stat-value error-color">{Number(stats?.errorRate || 0).toFixed(2)}<span className="unit">%</span></p>
         </div>
       </div>
 
+      {/* Charts */}
       <div className="charts-grid">
-        {/* Latency Chart */}
         <div className="chart-card">
-          <h3>Latency Over Time (Recent)</h3>
+          <h3>Latency Over Time</h3>
           {chartData.length > 0 ? (
-            <div style={{ height: 300, width: '100%' }}>
+            <div style={{ height: 280, width: '100%' }}>
               <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-                  <XAxis dataKey="time" stroke="#94a3b8" />
-                  <YAxis stroke="#94a3b8" />
-                  <Tooltip 
-                    contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
-                    itemStyle={{ color: '#60a5fa' }}
+                <AreaChart data={chartData}>
+                  <defs>
+                    <linearGradient id="latencyGradient" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor="#6366f1" stopOpacity={0.3} />
+                      <stop offset="100%" stopColor="#6366f1" stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.04)" />
+                  <XAxis 
+                    dataKey="time" 
+                    stroke="#5a6580" 
+                    tick={{ fontSize: 11 }} 
+                    axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} 
+                    tickLine={false}
                   />
-                  <Line 
+                  <YAxis 
+                    stroke="#5a6580" 
+                    tick={{ fontSize: 11 }} 
+                    axisLine={{ stroke: 'rgba(255,255,255,0.06)' }} 
+                    tickLine={false}
+                  />
+                  <Tooltip content={<CustomTooltip />} />
+                  <Area 
                     type="monotone" 
                     dataKey="latencyMs" 
-                    stroke="#3b82f6" 
+                    stroke="#6366f1" 
                     strokeWidth={2}
-                    dot={false}
-                    activeDot={{ r: 6 }} 
+                    fill="url(#latencyGradient)"
+                    activeDot={{ r: 5, fill: '#818cf8', strokeWidth: 0 }} 
                   />
-                </LineChart>
+                </AreaChart>
               </ResponsiveContainer>
             </div>
           ) : (
-            <div className="text-muted" style={{ padding: '2rem', textAlign: 'center' }}>No log data available yet.</div>
+            <div className="text-muted" style={{ padding: '3rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '2rem', marginBottom: '0.5rem', opacity: 0.5 }}>📊</div>
+              No log data available yet
+            </div>
           )}
         </div>
 
-        {/* Custom Uptime Bar */}
         <div className="chart-card">
-          <h3>Recent Uptime Status</h3>
+          <h3>Uptime Status</h3>
           <div className="uptime-bar-container">
             {chartData.length > 0 ? (
               chartData.map((log, index) => (
@@ -167,19 +207,23 @@ const EndpointDetail = () => {
               <div className="uptime-segment" />
             )}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', fontSize: '0.85rem' }} className="text-muted">
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.75rem', fontSize: '0.8rem' }} className="text-muted">
             <span>Older</span>
-            <span>Newer</span>
+            <span>Newer →</span>
           </div>
         </div>
       </div>
 
+      {/* Alerts History */}
       <div className="table-container" style={{ padding: '1.5rem' }}>
-        <h3 style={{ marginTop: 0, marginBottom: '1.5rem', fontWeight: 600 }}>Alert History</h3>
+        <h3 style={{ marginTop: 0, marginBottom: '1.25rem', fontWeight: 600, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: 'var(--text-secondary)' }}>
+          Alert History
+        </h3>
         
         {alerts.length === 0 ? (
-          <div className="text-muted" style={{ padding: '2rem 1rem', textAlign: 'center' }}>
-            No alerts triggered.
+          <div className="text-muted" style={{ padding: '2.5rem 1rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '0.5rem', opacity: 0.5 }}>🔔</div>
+            No alerts triggered
           </div>
         ) : (
           <table className="alerts-table">

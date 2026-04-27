@@ -16,14 +16,20 @@ const Navbar = () => {
   return (
     <nav className="navbar">
       <div className="navbar-brand">
-        <span className="logo">PulseCheck</span>
+        <span className="logo">💓 PulseCheck</span>
       </div>
       <div className="navbar-links">
-        <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>Dashboard</Link>
-        <Link to="/endpoints" className={`nav-link ${isActive('/endpoints')}`}>Endpoints</Link>
+        <Link to="/dashboard" className={`nav-link ${isActive('/dashboard')}`}>
+          Dashboard
+        </Link>
+        <Link to="/endpoints" className={`nav-link ${isActive('/endpoints')}`}>
+          Monitors
+        </Link>
       </div>
       <div className="navbar-actions">
-        <button className="nav-btn auth-btn" onClick={handleLogout}>Logout</button>
+        <button className="nav-btn" onClick={handleLogout}>
+          Sign Out
+        </button>
       </div>
     </nav>
   );
