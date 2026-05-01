@@ -1,12 +1,34 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../api/http';
 import EndpointModal from '../components/EndpointModal';
 import ConfirmModal from '../components/ConfirmModal';
 
+// Mock sparkline generator for UI demo
+const generateSparkline = () => {
+  const points = Array.from({ length: 7 }, (_, i) => `${i * 12},${28 - (Math.random() * 20)}`).join(' ');
+  return (
+    <svg width="80" height="28" viewBox="0 0 80 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+      <polyline points={points} fill="none" stroke="#6366f1" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+};
+
+// Mock latency generator
+const getLatency = (endpoint) => {
+  if (!endpoint.isActive) return null;
+  const val = Math.floor(Math.random() * 800) + 50; // 50 to 850
+  let color = 'green';
+  let pct = (val / 1000) * 100;
+  if (val > 300) color = 'amber';
+  if (val > 1000) { color = 'red'; pct = 100; }
+  return { val, color, pct };
+};
+
 const EndpointsPage = () => {
   const queryClient = useQueryClient();
+  const navigate = useNavigate();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [deleteConfirmId, setDeleteConfirmId] = useState(null);
@@ -80,8 +102,23 @@ const EndpointsPage = () => {
     setIsModalOpen(false);
   };
 
-  const handleToggleActive = (endpoint) => {
+  const handleToggleActive = (endpoint, e) => {
+    e.stopPropagation(); // prevent row click
     updateMutation.mutate({ id: endpoint._id, updated: { isActive: !endpoint.isActive } });
+  };
+
+  const handleDeleteClick = (endpoint, e) => {
+    e.stopPropagation();
+    setDeleteConfirmId(endpoint._id);
+  };
+
+  const handleEditClick = (endpoint, e) => {
+    e.stopPropagation();
+    handleOpenModal(endpoint);
+  };
+
+  const handleRowClick = (id) => {
+    navigate(`/endpoints/${id}`);
   };
 
   if (isLoading) return <div className="page loading-text">Loading monitors…</div>;
@@ -112,45 +149,69 @@ const EndpointsPage = () => {
           </p>
         </div>
       ) : (
-        <div className="table-container">
-          <table className="endpoints-table">
-            <thead>
-              <tr>
-                <th>Status</th>
-                <th>Name</th>
-                <th>Target URL</th>
-                <th>Method</th>
-                <th>Interval</th>
-                <th>Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {endpoints.map(endpoint => (
-                <tr key={endpoint._id}>
-                  <td>
-                    <span className={`status-badge ${endpoint.isActive ? 'badge-active' : 'badge-paused'}`}>
-                      {endpoint.isActive ? 'Active' : 'Paused'}
-                    </span>
-                  </td>
-                  <td className="font-semibold">{endpoint.name}</td>
-                  <td className="url-cell">{endpoint.url}</td>
-                  <td><span className="method-badge">{endpoint.method}</span></td>
-                  <td><span className="interval-txt">{endpoint.intervalMinutes}m</span></td>
-                  <td className="actions-cell">
-                    <Link to={`/endpoints/${endpoint._id}`} className="btn-text" style={{ textDecoration: 'none' }}>
-                      Details
-                    </Link>
-                    <button className="btn-text" onClick={() => handleToggleActive(endpoint)}>
-                      {endpoint.isActive ? 'Pause' : 'Resume'}
-                    </button>
-                    <button className="btn-text" onClick={() => handleOpenModal(endpoint)}>Edit</button>
-                    <button className="btn-text text-danger" onClick={() => setDeleteConfirmId(endpoint._id)}>Delete</button>
-                  </td>
+        <>
+          <div className="table-container">
+            <table className="endpoints-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Name</th>
+                  <th>Target URL</th>
+                  <th>Method</th>
+                  <th>Interval</th>
+                  <th style={{ width: '150px' }}>Latency</th>
+                  <th>7-Day</th>
+                  <th>Actions</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {endpoints.map(endpoint => {
+                  const latency = getLatency(endpoint);
+                  return (
+                    <tr key={endpoint._id} className="table-row-clickable" onClick={() => handleRowClick(endpoint._id)}>
+                      <td>
+                        <span className={`status-badge ${endpoint.isActive ? 'badge-active pulsing-dot' : 'badge-paused'}`}>
+                          {endpoint.isActive ? 'Active' : 'Paused'}
+                        </span>
+                      </td>
+                      <td className="font-semibold">{endpoint.name}</td>
+                      <td className="url-cell">{endpoint.url}</td>
+                      <td><span className="method-badge">{endpoint.method}</span></td>
+                      <td><span className="interval-txt">{endpoint.intervalMinutes}m</span></td>
+                      <td>
+                        {latency ? (
+                          <div className="latency-cell">
+                            <span className="latency-value" style={{ color: `var(--${latency.color === 'green' ? 'success' : latency.color === 'amber' ? 'warning' : 'error'}-text)` }}>
+                              {latency.val}ms
+                            </span>
+                            <div className="latency-track-bg">
+                              <div className={`latency-track-fill ${latency.color}`} style={{ width: `${latency.pct}%` }} />
+                            </div>
+                          </div>
+                        ) : (
+                          <span className="text-muted">-</span>
+                        )}
+                      </td>
+                      <td>{generateSparkline()}</td>
+                      <td className="actions-cell">
+                        <button className="btn-text" onClick={(e) => handleToggleActive(endpoint, e)}>
+                          {endpoint.isActive ? 'Pause' : 'Resume'}
+                        </button>
+                        <button className="btn-text" onClick={(e) => handleEditClick(endpoint, e)}>Edit</button>
+                        <button className="btn-text text-danger" onClick={(e) => handleDeleteClick(endpoint, e)}>Delete</button>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+          {endpoints.length === 1 && (
+            <p style={{ textAlign: 'center', color: 'var(--text-tertiary)', fontSize: '0.85rem', marginTop: '1.5rem' }}>
+              Add more endpoints to monitor your full system →
+            </p>
+          )}
+        </>
       )}
 
       <EndpointModal 

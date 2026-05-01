@@ -35,8 +35,8 @@ const EndpointModal = ({ isOpen, onClose, onSubmit, initialData }) => {
   };
 
   return (
-    <div className="modal-backdrop">
-      <div className="modal-content">
+    <div className="slide-panel-backdrop">
+      <div className="slide-panel">
         <h2>{initialData ? 'Edit Monitor' : 'Add New Monitor'}</h2>
         <form onSubmit={handleSubmit} className="crud-form">
           <label>
