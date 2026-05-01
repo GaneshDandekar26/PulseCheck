@@ -4,6 +4,11 @@ const helmet = require('helmet');
 const morgan = require('morgan');
 const authRouter = require('./routes/auth');
 const authenticateToken = require('./middleware/authenticateToken');
+const client = require('prom-client');
+
+// Initialize metrics collection
+const collectDefaultMetrics = client.collectDefaultMetrics;
+collectDefaultMetrics({ register: client.register });
 const endpointsRouter = require('./routes/endpoints');
 const dashboardRouter = require('./routes/dashboard');
 const alertsRouter = require('./routes/alerts');
@@ -17,6 +22,15 @@ app.use(morgan('combined'));
 
 app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.get('/metrics', async (req, res) => {
+  try {
+    res.set('Content-Type', client.register.contentType);
+    res.end(await client.register.metrics());
+  } catch (err) {
+    res.status(500).end(err);
+  }
 });
 
 app.use('/api/auth', authRouter);

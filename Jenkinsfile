@@ -4,7 +4,7 @@ pipeline {
     /* ── Parameterise the build ──────────────────────────────────── */
     environment {
         DOCKERHUB_REPO   = 'ganeshdandekar26/pulsecheck'
-        IMAGE_TAG        = sh(script: 'git rev-parse --short HEAD', returnStdout: true).trim()
+        IMAGE_TAG        = sh(script: 'git rev-parse --short HEAD 2>/dev/null || echo build-${BUILD_NUMBER}', returnStdout: true).trim()
         SCANNER_HOME     = tool 'SonarQubeScanner'   // name configured in Jenkins Global Tool Configuration
     }
 
