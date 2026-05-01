@@ -7,6 +7,10 @@ RUN curl -fsSL -O https://download.docker.com/linux/static/stable/x86_64/docker-
     mv docker/docker /usr/local/bin/ && \
     rm -rf docker docker-24.0.9.tgz
 
+# Install Node.js (required for npm ci and npm test)
+RUN curl -fsSL https://deb.nodesource.com/setup_20.x | bash - && \
+    apt-get install -y nodejs
+
 USER jenkins
 
 # Pre-install plugins
