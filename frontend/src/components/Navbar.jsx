@@ -25,6 +25,9 @@ const Navbar = () => {
         <Link to="/endpoints" className={`nav-link ${isActive('/endpoints')}`}>
           Monitors
         </Link>
+        <Link to="/alerts" className={`nav-link ${isActive('/alerts')}`}>
+          Alerts
+        </Link>
       </div>
       <div className="navbar-actions">
         <button className="nav-btn" onClick={handleLogout}>
