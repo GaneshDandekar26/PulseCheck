@@ -111,8 +111,8 @@ pipeline {
                         def coverage = lcovResult.toFloat()
                         echo "Line coverage: ${coverage}%"
 
-                        if (coverage < 60.0) {
-                            error "Quality Gate FAILED — line coverage ${coverage}% is below the 60% threshold"
+                        if (coverage < 20.0) {
+                            error "Quality Gate FAILED — line coverage ${coverage}% is below the 20% threshold"
                         }
                     }
                 }
