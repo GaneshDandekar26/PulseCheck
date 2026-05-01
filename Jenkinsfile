@@ -144,8 +144,9 @@ pipeline {
         }
 
         /* ─────────────────────────────────────────────────────────
-         * 7. Push to DockerHub
+         * 7. Push to DockerHub (COMMENTED OUT FOR LOCAL TESTING)
          * ───────────────────────────────────────────────────────── */
+        /*
         stage('Push to DockerHub') {
             steps {
                 withCredentials([usernamePassword(
@@ -167,6 +168,7 @@ pipeline {
                 }
             }
         }
+        */
     }
 
     /* ── Post-build actions ──────────────────────────────────────── */
